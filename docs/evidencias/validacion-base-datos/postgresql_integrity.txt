@@ -1,0 +1,81 @@
+======================================================================
+RESERVESYNC — PRUEBAS DE INTEGRIDAD Y REGLAS DE NEGOCIO (POSTGRESQL)
+======================================================================
+ total_reservaciones_comunes
+-----------------------------
+                           6
+(1 fila)
+
+
+[PRUEBA 1] Verificando Idempotencia del script seed...
+BEGIN
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+COMMIT
+  -> OK: Seed ejecutado nuevamente sin errores por claves duplicadas.
+
+[PRUEBA 2] Intentando asignar una mesa eliminada lógicamente...
+psql : psql:database/tests/test_postgresql_integrity.sql:39: NOTICE:    -> OK: Rechazado por trigger
+fn_validar_detalle_reservacion: Disponibilidad: La mesa 20000000-0000-0000-0000-000000000099 no está activa o se encuentra
+eliminada/en mantenimiento
+En línea: 1 Carácter: 1
++ psql -U postgres -h localhost -p 5432 -d reservesync_test_db -v ON_ER ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (psql:database/t...n mantenimiento:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+DO
+
+[PRUEBA 3] Intentando asignar una mesa a una reservación cancelada...
+psql:database/tests/test_postgresql_integrity.sql:66: NOTICE:    -> OK: Rechazado por trigger fn_validar_detalle_reservacion:
+Integridad: No se puede asignar mesas a una reservación inactiva, cancelada, rechazada, completada o eliminada (CANCELADA)
+DO
+
+[PRUEBA 4] Intentando modificar una asignación para producir solapamiento...
+psql:database/tests/test_postgresql_integrity.sql:100: NOTICE:    -> OK: Rechazado por trigger fn_validar_detalle_reservacion:
+Conflicto: La mesa 20000000-0000-0000-0000-000000000001 ya se encuentra asignada a la reservación activa RS-202611-A01 en ese
+horario
+DO
+
+[PRUEBA 5] Intentando crear un cierre que afecte una reservación activa...
+psql:database/tests/test_postgresql_integrity.sql:119: NOTICE:    -> OK: Rechazado por trigger fn_proteger_cierre:
+Disponibilidad: No se puede programar o modificar el cierre porque entra en conflicto con la reservación activa RS-202611-A01
+DO
+
+[PRUEBA 6] Intentando asignar una reservación dentro del cierre de mesa B-02...
+DO
+psql:database/tests/test_postgresql_integrity.sql:146: NOTICE:    -> OK: Rechazado por trigger fn_validar_detalle_reservacion:
+Disponibilidad: Existe un cierre programado ("Mantenimiento preventivo de barra y cableado en mesa B-02") que afecta a la mesa
+en esa fecha/hora
+psql:database/tests/test_postgresql_integrity.sql:164: NOTICE:    -> OK: Rechazado por trigger fn_proteger_mesa_update:
+Integridad: No se puede desactivar o eliminar la mesa M-01 porque tiene reservaciones activas futuras asociadas (código:
+RS-202611-A01)
+
+[PRUEBA 7] Intentando poner mesa M-01 en mantenimiento teniendo reservaciones futuras...
+DO
+
+[PRUEBA 8] Intentando reactivar reservación cuya mesa pasó a mantenimiento...
+psql:database/tests/test_postgresql_integrity.sql:223: NOTICE:    -> OK: Rechazado por trigger fn_validar_reserva_update:
+Disponibilidad: No se puede reactivar o actualizar la reservación porque una de sus mesas asignadas (M-T8) no está activa o fue
+eliminada
+DO
+
+[PRUEBA 9] Intentando registrar cierre MESA_ESPECIFICA especificando zona...
+psql:database/tests/test_postgresql_integrity.sql:243: NOTICE:    -> OK: Rechazado por restricción chk_cierres_tipo_alcance: el
+nuevo registro para la relación «cierres» viola la restricción «check» «chk_cierres_tipo_alcance»
+DO
+
+======================================================================
+TODAS LAS PRUEBAS DE INTEGRIDAD EN POSTGRESQL FINALIZADAS
+======================================================================

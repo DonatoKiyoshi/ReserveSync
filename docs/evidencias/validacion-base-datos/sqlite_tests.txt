@@ -1,0 +1,49 @@
+===========================================================================
+RESERVESYNC ÔÇö BATERIA DE 14 PRUEBAS OBLIGATORIAS EN SQLITE
+===========================================================================
+
+[PRUEBA 1] Creando el esquema DDL...
+  -> OK: Tablas, indices y triggers creados exitosamente.
+
+[PRUEBA 2] Insertando datos semilla comunes (sqlite_seed.sql)...
+  -> OK: 3 reservaciones comunes registradas (R1, R2, R3).
+
+[PRUEBA 3] Insertando datos exclusivos offline (sqlite_offline_seed.sql)...
+  -> OK: Reservacion offline R4 cargada (1 pendiente sync, 1 en cola outbox).
+
+[PRUEBA 4] Re-ejecutando seeds para comprobar idempotencia contra duplicados...
+  -> OK: Scripts re-ejecutados con exito sin errores de clave primaria o unica.
+
+[PRUEBA 5] Verificando integridad referencial (PRAGMA foreign_key_check)...
+  -> OK: 0 violaciones referenciales detectadas.
+
+[PRUEBA 6] Intentando asignar una mesa eliminada l├│gicamente...
+  -> OK: Rechazado por trigger (Disponibilidad: La mesa asignada no existe, est├í eliminada o no se encuentra activa).
+
+[PRUEBA 7] Intentando asignar mesa a una reservaci├│n cancelada...
+  -> OK: Rechazado por trigger (Integridad: No se puede asignar mesas a una reservaci├│n cancelada, rechazada, completada o eliminada).
+
+[PRUEBA 8] Intentando modificar una asignaci├│n para producir solapamiento de mesas...
+  -> OK: Rechazado por trigger (Conflicto: La nueva mesa asignada ya tiene otra reservaci├│n activa en ese horario).
+
+[PRUEBA 9] Intentando crear un cierre que afecte una reservaci├│n activa existente...
+  -> OK: Rechazado por trigger (Disponibilidad: No se puede registrar el cierre porque entra en conflicto con reservaciones activas existentes).
+
+[PRUEBA 10] Intentando asignar una reservaci├│n dentro de un cierre parcial (Mesa B-02 con cierre en UTC)...
+  -> OK: Rechazado por trigger (Disponibilidad: El restaurante, zona o mesa cuenta con un cierre o bloqueo programado en ese horario).
+
+[PRUEBA 11] Intentando poner una mesa en mantenimiento cuando tiene reservaciones futuras...
+  -> OK: Rechazado por trigger (Integridad: No se puede desactivar o eliminar una mesa que tiene reservaciones activas futuras asociadas).
+
+[PRUEBA 12] Intentando reactivar una reservaci├│n cuya mesa pas├│ a mantenimiento...
+  -> OK: Rechazado por trigger trg_validar_reserva_update (Disponibilidad: No se puede activar o mantener activa la reservaci├│n porque una o m├ís de sus mesas asignadas no est├ín activas o han sido eliminadas).
+
+[PRUEBA 13] Intentando insertar timestamps con desplazamiento horario (-06:00)...
+  -> OK: Rechazado por restricci├│n CHECK chk_reserva_ts_inicio (CHECK constraint failed: chk_reserva_ts_inicio).
+
+[PRUEBA 14] Intentando registrar cierre MESA_ESPECIFICA especificando zona y mesa simult├íneamente...
+  -> OK: Rechazado por restricci├│n CHECK chk_cierres_tipo_alcance (CHECK constraint failed: chk_cierres_tipo_alcance).
+
+===========================================================================
+RESULTADO FINAL: LAS 14 PRUEBAS OBLIGATORIAS PASARON CON EXITO (100% OK)
+===========================================================================

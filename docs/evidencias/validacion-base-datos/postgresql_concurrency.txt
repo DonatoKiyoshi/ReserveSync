@@ -1,0 +1,92 @@
+**********************
+Inicio de la transcripción de Windows PowerShell
+Hora de inicio: 20261114101358
+Nombre de usuario: KIYOSHI\x280
+Usuario RunAs: KIYOSHI\x280
+Nombre de la configuración:
+Máquina: KIYOSHI (Microsoft Windows NT 10.0.22621.0)
+Aplicación host: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Id. de proceso: 4952
+PSVersion: 5.1.22621.4249
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.4249
+BuildVersion: 10.0.22621.4249
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+La transcripción ha comenzado. El archivo de salida es .\docs\evidencias\validacion-base-datos\postgresql_concurrency.txt
+PS C:\Projects\ReserveSync> .\database\tests\test_postgresql_concurrency.ps1
+======================================================================
+RESERVESYNC - PRUEBAS DE CONCURRENCIA REAL EN POSTGRESQL (2 CONEXIONES)
+======================================================================
+Binario: psql
+Destino de pruebas: postgres@localhost:5432/reservesync_test_db
+
+[AVISO CRITICO DE ENTORNO]
+No se pudo establecer conexion al servidor PostgreSQL local (postgres@localhost:5432).
+Motivo: Autenticacion rechazada o contrasena no configurada en $env:PGPASSWORD / parametro -DbPassword.
+Estado de la prueba: DECLARADA PENDIENTE DE EJECUCION LOCAL.
+Para ejecutarla manualmente suministrando la contrasena:
+  powershell -ExecutionPolicy Bypass -File .\database\tests\test_postgresql_concurrency.ps1 -DbPassword 'tu_password'
+PS C:\Projects\ReserveSync> $env:PGPASSWORD = "admin2026"
+PS C:\Projects\ReserveSync> .\database\tests\test_postgresql_concurrency.ps1
+======================================================================
+RESERVESYNC - PRUEBAS DE CONCURRENCIA REAL EN POSTGRESQL (2 CONEXIONES)
+======================================================================
+Binario: psql
+Destino de pruebas: postgres@localhost:5432/reservesync_test_db
+
+[PASO 1] Inicializando base de datos de prueba 'reservesync_test_db'...
+  -> DROP DATABASE IF EXISTS reservesync_test_db...
+ OK
+  -> CREATE DATABASE reservesync_test_db ENCODING 'UTF8'...
+ OK
+  -> Carga de esquema DDL (schema.sql)...
+ OK
+  -> Carga de semillas iniciales (postgresql_seed.sql)...
+ OK
+  -> Base de pruebas inicializada y verificada correctamente al 100%.
+
+--- Ejecutando Escenario 1: Dos sesiones reservando la misma mesa (M-02) ---
+  [Sesion 1] OK: Completo y confirmo su transaccion exitosamente (exit code 0).
+  [Sesion 2] OK: Bloqueo detectado, retenida en espera y rechazada por regla de negocio esperada (SQLSTATE 23514).
+  [Integridad en BD] OK: Conteo exacto registrado en BD (1, esperado 1).
+  ==> RESUMEN Escenario 1: Dos sesiones reservando la misma mesa (M-02) : APROBADO
+
+--- Ejecutando Escenario 2: Mesas compartidas en orden inverso (PrevenciÃ³n de Deadlocks) ---
+  [Sesion 1] OK: Completo y confirmo su transaccion exitosamente (exit code 0).
+  [Sesion 2] OK: Bloqueo detectado, retenida en espera y rechazada por regla de negocio esperada (SQLSTATE 23514).
+  [Integridad en BD] OK: Conteo exacto registrado en BD (1, esperado 1).
+  ==> RESUMEN Escenario 2: Mesas compartidas en orden inverso (PrevenciÃ³n de Deadlocks) : APROBADO
+
+--- Ejecutando Escenario 3: Cierre programado en TERRAZA vs Reserva simultÃ¡nea ---
+  [Sesion 1] OK: Completo y confirmo su transaccion exitosamente (exit code 0).
+  [Sesion 2] OK: Bloqueo detectado, retenida en espera y rechazada por regla de negocio esperada (SQLSTATE 23514).
+  [Integridad en BD] OK: Conteo exacto registrado en BD (0, esperado 0).
+  ==> RESUMEN Escenario 3: Cierre programado en TERRAZA vs Reserva simultÃ¡nea : APROBADO
+
+--- Ejecutando Escenario 4: DesactivaciÃ³n de mesa M-06 vs Reserva simultÃ¡nea ---
+  [Sesion 1] OK: Completo y confirmo su transaccion exitosamente (exit code 0).
+  [Sesion 2] OK: Bloqueo detectado, retenida en espera y rechazada por regla de negocio esperada (SQLSTATE 23514).
+  [Integridad en BD] OK: Conteo exacto registrado en BD (0, esperado 0).
+  ==> RESUMEN Escenario 4: DesactivaciÃ³n de mesa M-06 vs Reserva simultÃ¡nea : APROBADO
+
+--- Preparando Escenario 5: Creacion de reservacion previa CANCELADA con mesa M-05 asignada ---
+  [Preparacion E5] OK: Reservacion CANCELADA con mesa M-05 asignada verificada en BD.
+
+--- Ejecutando Escenario 5: Reactivacion de reservacion vs Desactivacion concurrente de mesa (M-05) ---
+  [Sesion 1] OK: Completo y confirmo su transaccion exitosamente (exit code 0).
+  [Sesion 2] OK: Bloqueo detectado, retenida en espera y rechazada por regla de negocio esperada (SQLSTATE 23514).
+  [Integridad en BD] OK: Conteo exacto registrado en BD (1, esperado 1).
+  ==> RESUMEN Escenario 5: Reactivacion de reservacion vs Desactivacion concurrente de mesa (M-05) : APROBADO
+
+======================================================================
+TODOS LOS ESCENARIOS DE CONCURRENCIA EN POSTGRESQL APROBADOS (5/5)
+======================================================================
+PS C:\Projects\ReserveSync> Stop-Transcript
+**********************
+Fin de la transcripción de Windows PowerShell
+Hora de finalización: 20261114101515
+**********************
